@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Root reset inside shadow DOM */
+:host {
+  all: initial;
+  display: block;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 9999px;
+}
+
+/* Diff view overrides */
+.diff-gutter {
+  width: 2rem;
+  min-width: 2rem;
+}
+
+.addition {
+  background-color: #dcfce7;
+}
+.deletion {
+  background-color: #fee2e2;
+}
