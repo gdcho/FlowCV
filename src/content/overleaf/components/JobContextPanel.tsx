@@ -3,11 +3,12 @@ import type { JobContext } from '@/types/job'
 interface Props {
   jobContext: JobContext | null
   isLoading: boolean
+  fetchError: string | null
   onRefresh: () => void
   onClear: () => void
 }
 
-export function JobContextPanel({ jobContext, isLoading, onRefresh, onClear }: Props) {
+export function JobContextPanel({ jobContext, isLoading, fetchError, onRefresh, onClear }: Props) {
   return (
     <div className="mx-3 mb-3 rounded-lg border border-gray-200 bg-white p-3">
       {/* Header row */}
@@ -33,6 +34,12 @@ export function JobContextPanel({ jobContext, isLoading, onRefresh, onClear }: P
           </button>
         </div>
       </div>
+
+      {fetchError && (
+        <p className="text-[10px] text-red-500 mb-1">
+          Refresh failed — extension may need a page reload (Cmd+Shift+R).
+        </p>
+      )}
 
       {jobContext ? (
         <div>

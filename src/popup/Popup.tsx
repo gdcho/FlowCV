@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import type { JobContext } from "@/types/job";
+import { LOGO_DATA_URL, OVERLEAF_LOGO_URL } from "../logo";
 
 interface Settings {
   apiKey?: string;
@@ -128,20 +129,13 @@ export default function Popup() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <svg
-            width="18"
-            height="18"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.347a.5.5 0 01-.174.13l-2.196.878a.5.5 0 01-.65-.65l.878-2.196a.5.5 0 01.13-.174l.347-.347z"
-            />
-          </svg>
+          <img
+            src={LOGO_DATA_URL}
+            width={20}
+            height={20}
+            style={{ borderRadius: 3 }}
+            alt=""
+          />
           <span style={{ fontWeight: 700, fontSize: "0.9375rem" }}>FlowCV</span>
         </div>
       </div>
@@ -458,7 +452,10 @@ export default function Popup() {
                 cursor: "pointer",
               }}
             >
-              Open Overleaf
+              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.375rem" }}>
+                <img src={OVERLEAF_LOGO_URL} width={14} height={14} style={{ borderRadius: 2 }} alt="" />
+                Open Overleaf
+              </span>
             </button>
           </div>
         </div>

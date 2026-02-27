@@ -1,6 +1,66 @@
 import { useState } from 'react'
 import type { ProposedChange } from '@/types/ai'
 
+// ── Word-level diff ───────────────────────────────────────────────────────────
+
+type DiffToken = { text: string; type: 'equal' | 'delete' | 'insert' }
+
+function diffWords(before: string, after: string): { before: DiffToken[]; after: DiffToken[] } {
+  // Tokenize on word/whitespace/punctuation boundaries
+  const tokenize = (s: string): string[] => s.match(/\S+|\s+/g) ?? []
+  const a = tokenize(before)
+  const b = tokenize(after)
+  const m = a.length
+  const n = b.length
+
+  // LCS table
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0))
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1])
+
+  // Traceback
+  const beforeOut: DiffToken[] = []
+  const afterOut: DiffToken[] = []
+  let i = m, j = n
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && a[i - 1] === b[j - 1]) {
+      beforeOut.unshift({ text: a[i - 1], type: 'equal' })
+      afterOut.unshift({ text: b[j - 1], type: 'equal' })
+      i--; j--
+    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+      afterOut.unshift({ text: b[j - 1], type: 'insert' })
+      j--
+    } else {
+      beforeOut.unshift({ text: a[i - 1], type: 'delete' })
+      i--
+    }
+  }
+  return { before: beforeOut, after: afterOut }
+}
+
+function renderTokens(tokens: DiffToken[], highlight: 'delete' | 'insert') {
+  return tokens.map((t, i) =>
+    t.type === highlight ? (
+      <mark
+        key={i}
+        style={{
+          background: highlight === 'delete' ? '#fca5a5' : '#86efac',
+          borderRadius: 2,
+          padding: '0 1px',
+          color: 'inherit',
+        }}
+      >
+        {t.text}
+      </mark>
+    ) : (
+      <span key={i}>{t.text}</span>
+    )
+  )
+}
+
+// ── Components ────────────────────────────────────────────────────────────────
+
 interface Props {
   changes: ProposedChange[]
   selectedIds: Set<string>
@@ -51,6 +111,7 @@ function ChangeCard({
   onToggle: () => void
 }) {
   const [expanded, setExpanded] = useState(true)
+  const { before: beforeTokens, after: afterTokens } = diffWords(change.original, change.modified)
 
   return (
     <div
@@ -86,13 +147,13 @@ function ChangeCard({
           <div className="mb-1.5">
             <p className="text-[10px] font-semibold text-red-600 mb-1">Before</p>
             <pre className="text-[10px] font-mono bg-red-50 border border-red-100 rounded p-1.5 whitespace-pre-wrap break-all text-red-800 max-h-24 overflow-y-auto">
-              {change.original}
+              {renderTokens(beforeTokens, 'delete')}
             </pre>
           </div>
           <div>
             <p className="text-[10px] font-semibold text-emerald-600 mb-1">After</p>
             <pre className="text-[10px] font-mono bg-emerald-50 border border-emerald-100 rounded p-1.5 whitespace-pre-wrap break-all text-emerald-800 max-h-24 overflow-y-auto">
-              {change.modified}
+              {renderTokens(afterTokens, 'insert')}
             </pre>
           </div>
         </div>

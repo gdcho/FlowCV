@@ -24,9 +24,7 @@ export function ApplyButton({ changes, selectedIds, onApplied }: Props) {
         selected.map((c) => ({ original: c.original, modified: c.modified })),
       );
       if (count > 0) {
-        setResult(
-          `Applied ${count} of ${selected.length} changes, please recompile`,
-        );
+        setResult(`Applied ${count} of ${selected.length} changes — recompiling…`);
         onApplied();
       } else if (count === -1) {
         setResult(

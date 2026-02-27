@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { Sidebar } from "./Sidebar";
 // Vite ?inline returns the compiled CSS string — critical for Shadow DOM isolation
 import tailwindStyles from "./styles.css?inline";
+import { LOGO_DATA_URL } from "@/logo";
 
 let shadowHost: HTMLDivElement | null = null;
 let toggleBtn: HTMLButtonElement | null = null;
@@ -40,9 +41,7 @@ export function mountSidebar(): void {
     fontFamily: "ui-sans-serif, system-ui, sans-serif",
   });
   toggleBtn.innerHTML = `
-    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.347a.5.5 0 01-.174.13l-2.196.878a.5.5 0 01-.65-.65l.878-2.196a.5.5 0 01.13-.174l.347-.347z" />
-    </svg>
+    <img src="${LOGO_DATA_URL}" width="18" height="18" style="border-radius:3px" alt="" />
     <span style="writing-mode:vertical-rl;font-size:9px;font-weight:700;letter-spacing:0.1em">FlowCV</span>
   `;
   toggleBtn.addEventListener("click", () => {

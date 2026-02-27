@@ -158,6 +158,29 @@ function applyCodeMirrorEdit(original: string, modified: string): boolean {
   return true;
 }
 
+// ─── Overleaf compile trigger ─────────────────────────────────────────────────
+
+function triggerCompile(): void {
+  // Try multiple selectors — Overleaf's DOM varies across versions
+  const selectors = [
+    'button[data-ol-tooltip="Recompile"]',
+    'button[aria-label="Recompile"]',
+    'button[aria-label*="ecompile"]',
+    '.btn-recompile',
+  ]
+  for (const sel of selectors) {
+    const btn = document.querySelector<HTMLElement>(sel)
+    if (btn) { btn.click(); return }
+  }
+  // Fallback: scan all buttons for visible "Recompile" text
+  for (const btn of document.querySelectorAll<HTMLElement>('button')) {
+    if (btn.textContent?.trim().toLowerCase().includes('recompile')) {
+      btn.click(); return
+    }
+  }
+  console.warn('[FlowCV Bridge] Could not find Overleaf Recompile button')
+}
+
 // ─── Message listener ─────────────────────────────────────────────────────────
 // Set up IMMEDIATELY — the Sidebar can call requestContent() at any time.
 
@@ -221,6 +244,11 @@ window.addEventListener("message", (event: MessageEvent) => {
         },
         "*",
       );
+
+      // Auto-recompile if at least one change was applied
+      if (appliedCount > 0) {
+        setTimeout(triggerCompile, 300)
+      }
       break;
     }
   }

@@ -4,6 +4,7 @@ import type { JobContext } from '@/types/job'
 interface JDState {
   jobContext: JobContext | null
   isLoading: boolean
+  fetchError: string | null
 
   setJobContext: (jd: JobContext | null) => void
   setLoading: (loading: boolean) => void
@@ -13,24 +14,37 @@ interface JDState {
   fetch: () => Promise<void>
 }
 
+async function sendGetJD(): Promise<JobContext | null> {
+  const response = await chrome.runtime.sendMessage({ type: 'GET_JD' })
+  return (response as { payload: JobContext | null }).payload ?? null
+}
+
 export const useJDStore = create<JDState>()((set) => ({
   jobContext: null,
   isLoading: false,
+  fetchError: null,
 
   setJobContext: (jobContext) => set({ jobContext }),
   setLoading: (isLoading) => set({ isLoading }),
   clear: () => set({ jobContext: null }),
 
   fetch: async () => {
-    set({ isLoading: true })
+    set({ isLoading: true, fetchError: null })
     try {
-      const response = await chrome.runtime.sendMessage({ type: 'GET_JD' })
+      // MV3 service workers can be sleeping — retry once if the first attempt fails
+      let jd: JobContext | null
+      try {
+        jd = await sendGetJD()
+      } catch {
+        await new Promise<void>((r) => setTimeout(r, 400))
+        jd = await sendGetJD()
+      }
+      set({ jobContext: jd, isLoading: false })
+    } catch (err) {
       set({
-        jobContext: (response as { payload: JobContext | null }).payload ?? null,
         isLoading: false,
+        fetchError: err instanceof Error ? err.message : 'Failed to load JD',
       })
-    } catch {
-      set({ isLoading: false })
     }
   },
 }))

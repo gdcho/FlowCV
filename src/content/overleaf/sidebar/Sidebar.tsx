@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { LOGO_DATA_URL } from "@/logo";
 import { useSidebarStore } from "@/store/sidebar-store";
 import { useJDStore } from "@/store/jd-store";
 import { StatusIndicator } from "../components/StatusIndicator";
@@ -44,6 +45,7 @@ export function Sidebar() {
   const {
     jobContext,
     isLoading: jdLoading,
+    fetchError: jdError,
     fetch: fetchJD,
     clear: clearJD,
   } = useJDStore();
@@ -61,7 +63,7 @@ export function Sidebar() {
     const btn = document.getElementById(
       "FlowCV-toggle",
     ) as HTMLButtonElement | null;
-    if (btn) btn.style.right = isOpen ? "288px" : "0";
+    if (btn) btn.style.right = isOpen ? "300px" : "0";
   }, [isOpen]);
 
   // Fetch JD on mount
@@ -177,20 +179,13 @@ export function Sidebar() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <svg
-            width="16"
-            height="16"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.347a.5.5 0 01-.174.13l-2.196.878a.5.5 0 01-.65-.65l.878-2.196a.5.5 0 01.13-.174l.347-.347z"
-            />
-          </svg>
+          <img
+            src={LOGO_DATA_URL}
+            width={18}
+            height={18}
+            style={{ borderRadius: 3 }}
+            alt=""
+          />
           <span style={{ fontSize: "14px", fontWeight: 700 }}>FlowCV</span>
         </div>
         <button
@@ -252,6 +247,7 @@ export function Sidebar() {
         <JobContextPanel
           jobContext={jobContext}
           isLoading={jdLoading}
+          fetchError={jdError}
           onRefresh={() => void fetchJD()}
           onClear={clearJD}
         />
