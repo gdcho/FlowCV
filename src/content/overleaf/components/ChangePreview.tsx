@@ -3,9 +3,9 @@ import type { ProposedChange } from '@/types/ai'
 
 // ── Word-level diff ───────────────────────────────────────────────────────────
 
-type DiffToken = { text: string; type: 'equal' | 'delete' | 'insert' }
+export type DiffToken = { text: string; type: 'equal' | 'delete' | 'insert' }
 
-function diffWords(before: string, after: string): { before: DiffToken[]; after: DiffToken[] } {
+export function diffWords(before: string, after: string): { before: DiffToken[]; after: DiffToken[] } {
   // Tokenize on word/whitespace/punctuation boundaries
   const tokenize = (s: string): string[] => s.match(/\S+|\s+/g) ?? []
   const a = tokenize(before)
