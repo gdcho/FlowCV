@@ -63,7 +63,7 @@ export function Sidebar() {
     const btn = document.getElementById(
       "FlowCV-toggle",
     ) as HTMLButtonElement | null;
-    if (btn) btn.style.right = isOpen ? "300px" : "0";
+    if (btn) btn.style.right = isOpen ? "288px" : "0";
   }, [isOpen]);
 
   // Fetch JD on mount
@@ -181,8 +181,8 @@ export function Sidebar() {
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <img
             src={LOGO_DATA_URL}
-            width={18}
-            height={18}
+            width={28}
+            height={28}
             style={{ borderRadius: 3 }}
             alt=""
           />

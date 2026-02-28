@@ -35,14 +35,14 @@ export function mountSidebar(): void {
     color: "white",
     border: "none",
     borderRadius: "8px 0 0 8px",
-    padding: "12px 6px",
+    padding: "14px 8px",
     cursor: "pointer",
     boxShadow: "-2px 0 12px rgba(0,0,0,0.25)",
-    fontFamily: "ui-sans-serif, system-ui, sans-serif",
+    fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif",
   });
   toggleBtn.innerHTML = `
-    <img src="${LOGO_DATA_URL}" width="18" height="18" style="border-radius:3px" alt="" />
-    <span style="writing-mode:vertical-rl;font-size:9px;font-weight:700;letter-spacing:0.1em">FlowCV</span>
+    <img src="${LOGO_DATA_URL}" width="20" height="20" style="border-radius:4px" alt="" />
+    <span style="writing-mode:vertical-rl;font-size:11px;font-weight:700;letter-spacing:0.12em">FlowCV</span>
   `;
   toggleBtn.addEventListener("click", () => {
     document.dispatchEvent(new CustomEvent(TOGGLE_EVENT));
@@ -60,7 +60,7 @@ export function mountSidebar(): void {
     height: "100vh",
     zIndex: "999999",
     pointerEvents: "none",
-    fontFamily: "ui-sans-serif, system-ui, sans-serif",
+    fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif",
   });
   document.body.appendChild(shadowHost);
 

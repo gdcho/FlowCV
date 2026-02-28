@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { LOGO_DATA_URL } from "@/logo";
 
 const STORAGE_KEY = "FlowCV-settings";
 
@@ -90,7 +91,7 @@ export default function Options() {
         maxWidth: 640,
         margin: "0 auto",
         padding: "2rem",
-        fontFamily: "ui-sans-serif, system-ui, sans-serif",
+        fontFamily: "'Inter', ui-sans-serif, system-ui, sans-serif",
       }}
     >
       <div style={{ marginBottom: "2rem" }}>
@@ -102,13 +103,10 @@ export default function Options() {
             marginBottom: "0.5rem",
           }}
         >
-          <div
-            style={{
-              width: 4,
-              height: "1.75rem",
-              background: "#398453",
-              borderRadius: 2,
-            }}
+          <img
+            src={LOGO_DATA_URL}
+            alt="FlowCV"
+            style={{ width: 56, height: 56, borderRadius: 10 }}
           />
           <h1
             style={{
