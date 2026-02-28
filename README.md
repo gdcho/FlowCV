@@ -2,13 +2,13 @@
 
 ![FlowCV logo](./flowLogo.png)
 
-**FlowCV** is a Chrome extension that tailors your Overleaf LaTeX resume to a specific job description using Claude AI. Open a job posting on LinkedIn or Indeed, click Capture, and the extension proposes targeted edits directly inside your Overleaf editor — with word-level diff previews and one-click apply that auto-recompiles.
+**FlowCV** is a Chrome extension that tailors your Overleaf LaTeX resume to a specific job description using Claude AI. Open a job posting on LinkedIn, click Capture, and the extension proposes targeted edits directly inside your Overleaf editor — with word-level diff previews and one-click apply that auto-recompiles.
 
 ---
 
 ## Features
 
-- **JD scraping** — captures job title, summary, qualifications, responsibilities, keywords, and seniority level from LinkedIn and Indeed
+- **JD scraping** — captures job title, summary, qualifications, responsibilities, keywords, and seniority level from LinkedIn
 - **AI-powered tailoring** — Claude rewrites resume bullets to mirror the JD's exact keywords and quantify every bullet with metrics
 - **Word-level diff preview** — before/after view with deleted words in red and inserted words in green
 - **One-click apply** — patches your Overleaf LaTeX document in place and automatically triggers recompile
@@ -19,7 +19,7 @@
 
 ## How it works
 
-1. Open a job posting on LinkedIn or Indeed
+1. Open a job posting on LinkedIn (URL must contain `currentJobId`)
 2. Click the FlowCV popup icon → **Capture Job**
 3. Open your resume on Overleaf
 4. Click the FlowCV sidebar toggle button (right edge of the editor)
@@ -32,8 +32,8 @@
 
 ```mermaid
 flowchart TD
-    subgraph JD["① Job Capture (LinkedIn / Indeed)"]
-        LI["LinkedIn / Indeed page"]
+    subgraph JD["① Job Capture (LinkedIn)"]
+        LI["LinkedIn job posting\n(currentJobId in URL)"]
         SC["Scraper content script\n(ISOLATED world)"]
         POP["Popup UI\n(Capture Job button)"]
     end
@@ -82,25 +82,74 @@ flowchart TD
     style OV fill:#fefce8,stroke:#fde047
 ```
 
-### Component roles
+---
 
-| Component | World | Responsibility |
-| --------- | ----- | -------------- |
-| **Popup** | Extension page | Triggers JD capture; links to Settings |
-| **Scraper** content script | ISOLATED | Extracts JD from LinkedIn / Indeed DOM; saves to storage |
-| **Background SW** | Service worker | Message router; stores JD & settings; runs AI pipeline |
-| **AI pipeline** | Service worker | Builds Claude prompt, streams response, validates output |
-| **Overleaf** content script | ISOLATED | Injects bridge; mounts Shadow DOM sidebar |
-| **Bridge** | MAIN | Reads/writes Monaco & CodeMirror 6; triggers recompile |
-| **Sidebar** | Shadow DOM | React UI — diff preview, change selection, apply |
+## How the bridge works
 
-### Key design decisions
+Overleaf's editor is a full JavaScript application running in the page's own JavaScript context. Chrome content scripts run in an **ISOLATED world** — they share the DOM with the page but have a completely separate JavaScript heap. This means a content script cannot read `window.monaco` or access any of Overleaf's internal editor objects.
 
-- **MAIN world injection** — `chrome.scripting.executeScript({ world: 'MAIN' })` from the background SW bypasses Overleaf's CSP so the bridge can access `window.monaco` directly.
-- **Streaming port** — A `chrome.runtime.onConnect` long-lived port keeps the MV3 service worker alive for the full Claude stream (avoids the 30 s SW kill).
-- **Shadow DOM + Tailwind v3** — The sidebar is fully style-isolated. Tailwind v3 is required; v4 uses `@property` / `:root` variables that break inside a shadow root.
-- **Dual editor support** — Bridge tries Monaco first, then falls back to CodeMirror 6 (current Overleaf), reading minified property names to locate the `EditorView`.
-- **Safety validator** — Before any AI output touches your document: brace balance check, command allowlist, and a minimum-length guard.
+FlowCV solves this with a two-world bridge pattern.
+
+### The two-world problem
+
+| World | Who runs here | Can access |
+|-------|---------------|------------|
+| **MAIN** | The page itself (Overleaf's app code) | `window.monaco`, CodeMirror `EditorView`, all page globals |
+| **ISOLATED** | Chrome content scripts | DOM only — page JS globals are invisible |
+
+### Injecting into MAIN world
+
+When the Overleaf content script initialises, it sends a `BRIDGE_INJECT_REQUEST` message to the background service worker. The background SW then calls:
+
+```ts
+chrome.scripting.executeScript({
+  target: { tabId },
+  files: ['src/injected/bridge.ts'],
+  world: 'MAIN',          // ← runs in the page's own JS context
+})
+```
+
+This bypasses Overleaf's Content Security Policy because `chrome.scripting.executeScript` is a browser-level API that CSP cannot block. A `<script>` tag injection would be blocked by Overleaf's CSP.
+
+### Communication across worlds
+
+Once injected, the bridge and the sidebar (ISOLATED world) communicate exclusively via `window.postMessage`. Both worlds share the same `window` object for DOM events, making this the only safe cross-world channel.
+
+```
+Sidebar (ISOLATED)                      Bridge (MAIN)
+─────────────────────────────────────────────────────────
+window.postMessage({                     window.addEventListener('message', ...)
+  source: 'LATEX_FLOW_CONTENT',    →    reads msg.source to filter own messages
+  type:   'LATEX_FLOW_GET_CONTENT',
+  requestId: '<uuid>',
+})
+                                   ←    window.postMessage({
+                                           source: 'LATEX_FLOW_BRIDGE',
+                                           type:   'LATEX_FLOW_CONTENT_RESPONSE',
+                                           requestId: '<same uuid>',
+                                           payload: { content: '...' },
+                                         })
+```
+
+The `requestId` pairs each response to its request so concurrent calls don't collide.
+
+### Reading the editor
+
+The bridge tries two editor APIs in order:
+
+1. **Monaco** (older Overleaf) — `window.monaco.editor.getEditors()[0].getModel().getValue()`
+2. **CodeMirror 6** (Overleaf 2023+) — locates the `EditorView` from the `.cm-content` DOM element
+
+For CodeMirror 6, Overleaf's production bundle is minified so the standard `element.cmView` property may be renamed to a short key. The bridge scans every own enumerable property of `.cm-content` looking for anything that satisfies the `EditorView` interface (`state.doc.toString` + `dispatch`). This makes it resilient to minifier renames.
+
+### Applying edits
+
+Changes are applied using each editor's native API so that Overleaf's own undo/redo stack is preserved:
+
+- **CodeMirror 6** — `view.dispatch({ changes: { from, to, insert } })`
+- **Monaco** — `model.pushStackElement()` + `model.pushEditOperations(...)` + `model.pushStackElement()`
+
+After all changes are applied, the bridge locates and clicks Overleaf's Recompile button (trying four different selectors + a text-content fallback) so the PDF updates automatically.
 
 ---
 
@@ -149,7 +198,7 @@ src/
 │   ├── overleaf/         # Overleaf sidebar UI (React, Shadow DOM)
 │   │   ├── components/   # ChangePreview, ApplyButton, JobContextPanel, ...
 │   │   └── sidebar/      # Mount point, toggle button
-│   └── scraper/          # LinkedIn/Indeed JD extraction
+│   └── scraper/          # LinkedIn JD extraction
 │       ├── keywords.ts   # Keyword pattern matching
 │       ├── utils.ts      # Pure text cleaning + section parsing
 │       └── index.ts      # Content script entry, Chrome message listener
@@ -170,11 +219,10 @@ src/
 | Permission                | Reason                                                          |
 | ------------------------- | --------------------------------------------------------------- |
 | `storage`                 | Persists the captured job description across sessions           |
-| `activeTab`               | Reads the current tab URL to detect LinkedIn/Indeed             |
+| `activeTab`               | Reads the current tab URL to detect LinkedIn                    |
 | `scripting`               | Injects the Monaco/CodeMirror bridge into Overleaf's MAIN world |
 | Host: `overleaf.com`      | Runs the sidebar content script and bridge injection            |
 | Host: `linkedin.com`      | Runs the JD scraper content script                              |
-| Host: `indeed.com`        | Runs the JD scraper content script                              |
 | Host: `api.anthropic.com` | Streams Claude API responses from the service worker            |
 
 ---
