@@ -69,10 +69,28 @@ function extractOnce(platform: "linkedin" | "indeed"): JobContext | null {
 
 // ─── Listen for popup capture requests ───────────────────────────────────────
 
+function isJobPosting(): boolean {
+  const { href } = window.location;
+  if (href.includes("linkedin.com"))
+    return href.includes("currentJobId=") || href.includes("/jobs/view/");
+  if (href.includes("indeed.com"))
+    return href.includes("viewjob") || href.includes("jk=");
+  return false;
+}
+
 const platform = detectPlatform();
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type !== "CAPTURE_JD_REQUEST") return false;
+
+  if (platform && !isJobPosting()) {
+    sendResponse({
+      success: false,
+      error:
+        "Open a specific job posting first — the URL should contain currentJobId (LinkedIn) or jk= (Indeed)",
+    });
+    return false;
+  }
 
   const jd = platform ? extractOnce(platform) : null;
 

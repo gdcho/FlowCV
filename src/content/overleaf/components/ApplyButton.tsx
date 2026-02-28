@@ -24,12 +24,12 @@ export function ApplyButton({ changes, selectedIds, onApplied }: Props) {
         selected.map((c) => ({ original: c.original, modified: c.modified })),
       );
       if (count > 0) {
-        setResult(`Applied ${count} of ${selected.length} changes — recompiling…`);
+        setResult(
+          `Applied ${count} of ${selected.length} changes, recompiling`,
+        );
         onApplied();
       } else if (count === -1) {
-        setResult(
-          "Bridge not connected — refresh the page (Cmd+Shift+R) then try again.",
-        );
+        setResult("Bridge not connected — refresh the page then try again.");
       } else {
         setResult(
           "Could not apply — original text not found. Try re-analyzing.",

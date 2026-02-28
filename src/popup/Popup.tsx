@@ -12,8 +12,23 @@ type CaptureStatus =
   | "error"
   | "not-job-page";
 
-function isJobPlatform(url: string): boolean {
-  return url.includes("linkedin.com") || url.includes("indeed.com");
+type PageContext = "none" | "feed" | "posting";
+
+function getPageContext(url: string): PageContext {
+  if (!url) return "none";
+  // LinkedIn: actual job posting has currentJobId in query OR /jobs/view/ in path
+  if (url.includes("linkedin.com")) {
+    return url.includes("currentJobId=") || url.includes("/jobs/view/")
+      ? "posting"
+      : "feed";
+  }
+  // Indeed: actual job posting has viewjob in path or jk= param
+  if (url.includes("indeed.com")) {
+    return url.includes("viewjob") || url.includes("jk=")
+      ? "posting"
+      : "feed";
+  }
+  return "none";
 }
 
 export default function Popup() {
@@ -72,19 +87,16 @@ export default function Popup() {
         const msg =
           connErr instanceof Error ? connErr.message : String(connErr);
         if (
-          !msg.includes("Receiving end does not exist") &&
-          !msg.includes("Could not establish connection")
+          msg.includes("Receiving end does not exist") ||
+          msg.includes("Could not establish connection")
         ) {
-          throw connErr;
+          // Content script not yet active on this tab — happens when the
+          // extension was just installed/updated and the tab predates it.
+          setCaptureStatus("error");
+          setCaptureError("Refresh the page and try again");
+          return;
         }
-        // Content script not present — inject it now, then retry
-        await chrome.scripting.executeScript({
-          target: { tabId: tab.id },
-          files: ["src/content/scraper/index.ts"],
-        });
-        // Give the script a moment to register its onMessage listener
-        await new Promise<void>((r) => setTimeout(r, 150));
-        resp = await sendCapture(tab.id);
+        throw connErr;
       }
 
       if (resp.success) {
@@ -114,7 +126,7 @@ export default function Popup() {
   }
 
   const hasApiKey = Boolean(settings.apiKey);
-  const onJobPage = isJobPlatform(activeTabUrl);
+  const pageContext = getPageContext(activeTabUrl);
 
   return (
     <div
@@ -373,7 +385,7 @@ export default function Popup() {
                 background: "#fff",
               }}
             >
-              {onJobPage ? (
+              {pageContext === "posting" ? (
                 <button
                   onClick={() => void handleCapture()}
                   disabled={captureStatus === "capturing"}
@@ -407,6 +419,31 @@ export default function Popup() {
                           ? "⚡ Capture new JD from this tab"
                           : "⚡ Capture JD from this tab"}
                 </button>
+              ) : pageContext === "feed" ? (
+                <p
+                  style={{
+                    fontSize: "0.6875rem",
+                    color: "#6b7280",
+                    textAlign: "center",
+                    padding: "0.125rem 0",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Open a specific job posting first —
+                  <br />
+                  the URL should contain{" "}
+                  <code
+                    style={{
+                      fontSize: "0.625rem",
+                      background: "#f3f4f6",
+                      padding: "1px 4px",
+                      borderRadius: 3,
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    currentJobId
+                  </code>
+                </p>
               ) : (
                 <p
                   style={{
@@ -416,7 +453,7 @@ export default function Popup() {
                     padding: "0.125rem 0",
                   }}
                 >
-                  Navigate to a LinkedIn or Indeed job listing to capture
+                  Navigate to a LinkedIn or Indeed job posting to capture
                 </p>
               )}
               {captureStatus === "error" && captureError && (
