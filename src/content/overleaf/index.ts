@@ -1,5 +1,5 @@
 /**
- * Overleaf content script — ISOLATED world.
+ * Overleaf content script - ISOLATED world.
  *
  * 1. Injects the Monaco bridge into the MAIN world.
  * 2. Mounts the Shadow DOM sidebar.
@@ -29,7 +29,7 @@ async function initialize() {
 // Initial run
 initialize().catch(console.error);
 
-// Overleaf is a React SPA — handle client-side navigation
+// Overleaf is a React SPA - handle client-side navigation
 let lastPath = window.location.pathname;
 const observer = new MutationObserver(() => {
   if (window.location.pathname !== lastPath) {

@@ -2,18 +2,18 @@
 
 ![FlowCV logo](./flowLogo.png)
 
-**FlowCV** is a Chrome extension that tailors your Overleaf LaTeX resume to a specific job description using Claude AI. Open a job posting on LinkedIn, click Capture, and the extension proposes targeted edits directly inside your Overleaf editor — with word-level diff previews and one-click apply that auto-recompiles.
+**FlowCV** is a Chrome extension that tailors your Overleaf LaTeX resume to a specific job description using Claude AI. Open a job posting on LinkedIn, click Capture, and the extension proposes targeted edits directly inside your Overleaf editor - with word-level diff previews and one-click apply that auto-recompiles.
 
 ---
 
 ## Features
 
-- **JD scraping** — captures job title, summary, qualifications, responsibilities, keywords, and seniority level from LinkedIn
-- **AI-powered tailoring** — Claude rewrites resume bullets to mirror the JD's exact keywords and quantify every bullet with metrics
-- **Word-level diff preview** — before/after view with deleted words in red and inserted words in green
-- **One-click apply** — patches your Overleaf LaTeX document in place and automatically triggers recompile
-- **ATS optimization** — prompt engineered for Workday, Greenhouse, Lever, and iCIMS keyword scoring
-- **Safety validation** — brace balance checks and command allowlist prevent malformed LaTeX from reaching your document
+- **JD scraping** - captures job title, summary, qualifications, responsibilities, keywords, and seniority level from LinkedIn
+- **AI-powered tailoring** - Claude rewrites resume bullets to mirror the JD's exact keywords and quantify every bullet with metrics
+- **Word-level diff preview** - before/after view with deleted words in red and inserted words in green
+- **One-click apply** - patches your Overleaf LaTeX document in place and automatically triggers recompile
+- **ATS optimization** - prompt engineered for Workday, Greenhouse, Lever, and iCIMS keyword scoring
+- **Safety validation** - brace balance checks and command allowlist prevent malformed LaTeX from reaching your document
 
 ---
 
@@ -24,7 +24,7 @@
 3. Open your resume on Overleaf
 4. Click the FlowCV sidebar toggle button (right edge of the editor)
 5. Review proposed changes with before/after word diffs
-6. Select the changes you want and click **Apply** — Overleaf recompiles automatically
+6. Select the changes you want and click **Apply** - Overleaf recompiles automatically
 
 ---
 
@@ -86,7 +86,7 @@ flowchart TD
 
 ## How the bridge works
 
-Overleaf's editor is a full JavaScript application running in the page's own JavaScript context. Chrome content scripts run in an **ISOLATED world** — they share the DOM with the page but have a completely separate JavaScript heap. This means a content script cannot read `window.monaco` or access any of Overleaf's internal editor objects.
+Overleaf's editor is a full JavaScript application running in the page's own JavaScript context. Chrome content scripts run in an **ISOLATED world** - they share the DOM with the page but have a completely separate JavaScript heap. This means a content script cannot read `window.monaco` or access any of Overleaf's internal editor objects.
 
 FlowCV solves this with a two-world bridge pattern.
 
@@ -95,7 +95,7 @@ FlowCV solves this with a two-world bridge pattern.
 | World | Who runs here | Can access |
 |-------|---------------|------------|
 | **MAIN** | The page itself (Overleaf's app code) | `window.monaco`, CodeMirror `EditorView`, all page globals |
-| **ISOLATED** | Chrome content scripts | DOM only — page JS globals are invisible |
+| **ISOLATED** | Chrome content scripts | DOM only - page JS globals are invisible |
 
 ### Injecting into MAIN world
 
@@ -137,8 +137,8 @@ The `requestId` pairs each response to its request so concurrent calls don't col
 
 The bridge tries two editor APIs in order:
 
-1. **Monaco** (older Overleaf) — `window.monaco.editor.getEditors()[0].getModel().getValue()`
-2. **CodeMirror 6** (Overleaf 2023+) — locates the `EditorView` from the `.cm-content` DOM element
+1. **Monaco** (older Overleaf) - `window.monaco.editor.getEditors()[0].getModel().getValue()`
+2. **CodeMirror 6** (Overleaf 2023+) - locates the `EditorView` from the `.cm-content` DOM element
 
 For CodeMirror 6, Overleaf's production bundle is minified so the standard `element.cmView` property may be renamed to a short key. The bridge scans every own enumerable property of `.cm-content` looking for anything that satisfies the `EditorView` interface (`state.doc.toString` + `dispatch`). This makes it resilient to minifier renames.
 
@@ -146,8 +146,8 @@ For CodeMirror 6, Overleaf's production bundle is minified so the standard `elem
 
 Changes are applied using each editor's native API so that Overleaf's own undo/redo stack is preserved:
 
-- **CodeMirror 6** — `view.dispatch({ changes: { from, to, insert } })`
-- **Monaco** — `model.pushStackElement()` + `model.pushEditOperations(...)` + `model.pushStackElement()`
+- **CodeMirror 6** - `view.dispatch({ changes: { from, to, insert } })`
+- **Monaco** - `model.pushStackElement()` + `model.pushEditOperations(...)` + `model.pushStackElement()`
 
 After all changes are applied, the bridge locates and clicks Overleaf's Recompile button (trying four different selectors + a text-content fallback) so the PDF updates automatically.
 

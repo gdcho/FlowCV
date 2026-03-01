@@ -46,7 +46,7 @@ export function extractKeywords(text: string): string[] {
     }
   }
 
-  // Years of experience — extract "X+ years of <domain>" if present
+  // Years of experience - extract "X+ years of <domain>" if present
   for (const m of text.matchAll(/(\d+)\+?\s*years?\s+(?:of\s+)?(?:experience\s+(?:in|with)\s+([\w\s,/+#.]+?(?:\s|$))|experience)/gi)) {
     const years = m[1]
     const domain = m[2]?.trim().replace(/[,.]$/, '').slice(0, 40)

@@ -90,7 +90,7 @@ export default function Popup() {
           msg.includes("Receiving end does not exist") ||
           msg.includes("Could not establish connection")
         ) {
-          // Content script not yet active on this tab — happens when the
+          // Content script not yet active on this tab - happens when the
           // extension was just installed/updated and the tab predates it.
           setCaptureStatus("error");
           setCaptureError("Refresh the page and try again");
@@ -178,7 +178,7 @@ export default function Popup() {
             label={
               hasApiKey
                 ? "API key configured"
-                : "API key missing — click Settings"
+                : "API key missing - click Settings"
             }
             action={
               <SmallBtn onClick={() => chrome.runtime.openOptionsPage()}>
@@ -325,7 +325,7 @@ export default function Popup() {
                     </div>
                   )}
 
-                  {/* Keyword chips — capped at 8 */}
+                  {/* Keyword chips - capped at 8 */}
                   {jd.keywords.length > 0 && (
                     <div
                       style={{
@@ -414,7 +414,7 @@ export default function Popup() {
                     : captureStatus === "success"
                       ? "✓ Captured! Capture another?"
                       : captureStatus === "error"
-                        ? "✗ Failed — Try again"
+                        ? "✗ Failed - Try again"
                         : jd
                           ? "⚡ Capture new JD from this tab"
                           : "⚡ Capture JD from this tab"}
@@ -429,7 +429,7 @@ export default function Popup() {
                     lineHeight: 1.5,
                   }}
                 >
-                  Open a specific job posting first —
+                  Open a specific job posting first -
                   <br />
                   the URL should contain{" "}
                   <code

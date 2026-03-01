@@ -236,7 +236,7 @@ export default function Options() {
           >
             console.anthropic.com
           </a>
-          . Stored locally — never sent anywhere except Anthropic's API.
+          . Stored locally - never sent anywhere except Anthropic's API.
         </p>
       </div>
 

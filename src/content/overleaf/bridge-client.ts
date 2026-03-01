@@ -1,5 +1,5 @@
 /**
- * bridge-client.ts — Typed postMessage wrapper for the ISOLATED world side.
+ * bridge-client.ts - Typed postMessage wrapper for the ISOLATED world side.
  *
  * Provides Promise-based APIs over the raw window.postMessage protocol,
  * with timeouts and automatic cleanup.
@@ -12,7 +12,7 @@ import type { ProposedChange } from "@/types/ai";
 type MessageHandler = (msg: BridgeMessage) => void;
 const handlers = new Set<MessageHandler>();
 
-// Single global listener — avoid duplicating event listeners on re-import
+// Single global listener - avoid duplicating event listeners on re-import
 let listenerAttached = false;
 
 function ensureListener() {
@@ -40,7 +40,7 @@ export function waitForBridgeReady(timeoutMs = 15000): Promise<void> {
     const timeout = setTimeout(() => {
       cleanup();
       reject(
-        new Error("[FlowCV] Bridge ready timeout — Monaco may not have loaded"),
+        new Error("[FlowCV] Bridge ready timeout - Monaco may not have loaded"),
       );
     }, timeoutMs);
 
@@ -56,7 +56,7 @@ export function waitForBridgeReady(timeoutMs = 15000): Promise<void> {
 
 /**
  * Read LaTeX content directly from CodeMirror 6's DOM elements.
- * Content scripts in the ISOLATED world can query the page DOM directly —
+ * Content scripts in the ISOLATED world can query the page DOM directly -
  * no MAIN world bridge required for reading.
  */
 function readFromDOM(): string | null {
@@ -77,7 +77,7 @@ function readFromDOM(): string | null {
  *  Strategy:
  *  1. Send LATEX_FLOW_GET_CONTENT to the MAIN world bridge (retrying every 800ms).
  *  2. After 3s with no bridge response, fall back to reading .cm-line DOM nodes
- *     directly from the ISOLATED world — works even if bridge injection failed.
+ *     directly from the ISOLATED world - works even if bridge injection failed.
  *  3. At full timeout, one final DOM read before rejecting.
  */
 export function requestContent(timeoutMs = 20000): Promise<string> {
@@ -145,7 +145,7 @@ export function requestContent(timeoutMs = 20000): Promise<string> {
 /** Apply a list of changes to the editor via the MAIN world bridge.
  *
  *  The bridge uses view.dispatch() / model.pushEditOperations() on the
- *  full in-memory document — safe for CodeMirror 6's virtual DOM where
+ *  full in-memory document - safe for CodeMirror 6's virtual DOM where
  *  only visible lines are rendered.
  *
  *  NOTE: The DOM execCommand fallback was intentionally removed. It read

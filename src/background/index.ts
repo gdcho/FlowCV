@@ -25,7 +25,7 @@ chrome.runtime.onMessage.addListener(
 
       case "BRIDGE_INJECT_REQUEST": {
         // Inject bridge.js into the Overleaf tab's MAIN world.
-        // chrome.scripting.executeScript bypasses the page's CSP — necessary for Overleaf.
+        // chrome.scripting.executeScript bypasses the page's CSP - necessary for Overleaf.
         // Return true so the message port stays open until executeScript resolves.
         const tabId = sender.tab?.id;
         if (tabId == null) {

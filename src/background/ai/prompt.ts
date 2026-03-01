@@ -13,13 +13,13 @@ HOW ATS SCORING WORKS (optimize for all of these):
 
 ATS-FIRST REWRITING RULES:
 
-★ RULE 1 — QUANTIFY EVERY SINGLE BULLET (HIGHEST PRIORITY):
+★ RULE 1 - QUANTIFY EVERY SINGLE BULLET (HIGHEST PRIORITY):
 This is the single most important rule. A bullet without a number is half a bullet. ATS systems reward metrics and so do recruiters. You MUST apply one of these strategies to EVERY bullet:
-  a) USE EXISTING NUMBERS PROMINENTLY: If the original has any number, make it the centerpiece. "Improved API response time" → "Reduced API response time by 42%, cutting p99 latency from 800ms to 460ms". Never bury a number at the end — lead with it or put it in the first half of the bullet.
+  a) USE EXISTING NUMBERS PROMINENTLY: If the original has any number, make it the centerpiece. "Improved API response time" → "Reduced API response time by 42%, cutting p99 latency from 800ms to 460ms". Never bury a number at the end - lead with it or put it in the first half of the bullet.
   b) ADD SCALE/SCOPE when no percentage or count exists: Every project has a size. Inject the most impressive truthful scope: users served ("serving 200,000+ monthly active users"), team size ("across a 15-engineer org"), codebase size ("across 80+ microservices"), throughput ("processing 10M events/day"), uptime ("achieving 99.97% uptime"), release cadence ("shipped weekly across 4 environments").
   c) ADD BUSINESS IMPACT: Frame engineering work in business terms: "reduced AWS spend by $12k/month", "cut deployment time from 45 min to 8 min", "eliminated 3 hours/week of manual QA".
   d) ADD COMPARATIVE BEFORE/AFTER: "Refactored monolith into 6 microservices, reducing mean deploy time by 70%". Always show the delta, not just the result.
-  FORBIDDEN: Any bullet that contains none of: a percentage, a dollar amount, a count, a time duration, a user count, a team size, or a scale qualifier. If you truly cannot find a truthful number or scope, use "across the full-stack codebase", "as the sole engineer", or "for the company's flagship product" — but always add SOMETHING.
+  FORBIDDEN: Any bullet that contains none of: a percentage, a dollar amount, a count, a time duration, a user count, a team size, or a scale qualifier. If you truly cannot find a truthful number or scope, use "across the full-stack codebase", "as the sole engineer", or "for the company's flagship product" - but always add SOMETHING.
 
 2. EXACT KEYWORD MIRRORING: Copy the JD's exact phrasing for tools, languages, and skills. If the JD says "RESTful APIs", use "RESTful APIs" not "REST APIs". If it says "agile methodologies", use that exact phrase.
 3. KEYWORD DENSITY: Each high-priority JD keyword should appear at least once in a bullet, ideally also in the skills block. Do not rely on it appearing only in the skills section.
@@ -94,5 +94,5 @@ ${jd.fullText.slice(0, 4000)}
 ${respSection}${qualSection}${keywordsSection}RESUME BLOCKS TO REWRITE:
 ${blocksSection}
 
-Rewrite the resume blocks above to target this job. Only include blocks where there is a real alignment gap — skip blocks that are already well-matched. Follow the output format exactly.`;
+Rewrite the resume blocks above to target this job. Only include blocks where there is a real alignment gap - skip blocks that are already well-matched. Follow the output format exactly.`;
 }

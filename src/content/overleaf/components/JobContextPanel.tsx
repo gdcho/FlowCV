@@ -37,7 +37,7 @@ export function JobContextPanel({ jobContext, isLoading, fetchError, onRefresh, 
 
       {fetchError && (
         <p className="text-[10px] text-red-500 mb-1">
-          Refresh failed — extension may need a page reload (Cmd+Shift+R).
+          Refresh failed - extension may need a page reload (Cmd+Shift+R).
         </p>
       )}
 
@@ -73,7 +73,7 @@ export function JobContextPanel({ jobContext, isLoading, fetchError, onRefresh, 
             </div>
           )}
 
-          {/* Keyword chips — capped at 6 */}
+          {/* Keyword chips - capped at 6 */}
           {jobContext.keywords.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
               {jobContext.keywords.slice(0, 6).map((kw) => (

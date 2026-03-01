@@ -31,7 +31,7 @@ export const useJDStore = create<JDState>()((set) => ({
   fetch: async () => {
     set({ isLoading: true, fetchError: null })
     try {
-      // MV3 service workers can be sleeping — retry once if the first attempt fails
+      // MV3 service workers can be sleeping - retry once if the first attempt fails
       let jd: JobContext | null
       try {
         jd = await sendGetJD()

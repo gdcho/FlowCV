@@ -79,7 +79,7 @@ describe('parseLatexDocument', () => {
     const latex =
       '\\resumeSubheading{Acme}{2023}{Eng}{NY}\n\\resumeItem{Built stuff}'
     const blocks = parseLatexDocument(latex)
-    // The subheading captures the resumeItem inside it — no extra standalone resumeItem block
+    // The subheading captures the resumeItem inside it - no extra standalone resumeItem block
     const subheadings = blocks.filter((b) => b.type === 'resumeSubheading')
     const items = blocks.filter((b) => b.type === 'resumeItem')
     // If the resumeItem is inside the subheading range, it should be claimed
@@ -89,7 +89,7 @@ describe('parseLatexDocument', () => {
       ),
     )
     if (itemInsideSubheading) {
-      // All items are inside subheadings — no double-claiming occurred
+      // All items are inside subheadings - no double-claiming occurred
       expect(subheadings.length).toBeGreaterThan(0)
     } else {
       // Items outside subheadings are fine

@@ -1,5 +1,5 @@
 /**
- * JD Scraper content script — runs on LinkedIn and Indeed pages.
+ * JD Scraper content script - runs on LinkedIn and Indeed pages.
  *
  * No floating button. No auto-scraping. Only responds to explicit
  * CAPTURE_JD_REQUEST messages sent from the popup.
@@ -87,7 +87,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     sendResponse({
       success: false,
       error:
-        "Open a specific job posting first — the URL should contain currentJobId (LinkedIn) or jk= (Indeed)",
+        "Open a specific job posting first - the URL should contain currentJobId (LinkedIn) or jk= (Indeed)",
     });
     return false;
   }

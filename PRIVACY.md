@@ -1,4 +1,4 @@
-# Privacy Policy — FlowCV Chrome Extension
+# Privacy Policy - FlowCV Chrome Extension
 
 **Last updated: February 2026**
 

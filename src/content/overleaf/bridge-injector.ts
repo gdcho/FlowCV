@@ -1,5 +1,5 @@
 /**
- * bridge-injector.ts — Runs in ISOLATED world.
+ * bridge-injector.ts - Runs in ISOLATED world.
  *
  * Asks the background service worker to inject bridge.js into the
  * Overleaf tab's MAIN world via chrome.scripting.executeScript.

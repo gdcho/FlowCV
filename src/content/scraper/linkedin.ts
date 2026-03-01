@@ -39,7 +39,7 @@ function queryNonEmpty(selectors: string[]): HTMLElement | null {
   return null;
 }
 
-/** Like queryNonEmpty but for short labels (title, company — typically < 80 chars). */
+/** Like queryNonEmpty but for short labels (title, company - typically < 80 chars). */
 function queryShort(selectors: string[]): HTMLElement | null {
   for (const sel of selectors) {
     try {
@@ -142,7 +142,7 @@ export function extractLinkedInJD(): JobContext | null {
     ]);
   }
 
-  // Strategy C: Find the largest text block — scoped to detail panel when available
+  // Strategy C: Find the largest text block - scoped to detail panel when available
   if (!descriptionEl) {
     descriptionEl = findLargestTextBlockIn(detailPanel ?? document.body);
   }

@@ -44,7 +44,7 @@ export function StatusIndicator({ status, errorMessage, streamingText }: Props) 
   if (status === 'complete') {
     return (
       <div className="mx-3 mb-3 rounded-lg bg-ov-pale border border-ov-light p-2">
-        <p className="text-xs text-ov-dark font-semibold">Analysis complete — review changes below.</p>
+        <p className="text-xs text-ov-dark font-semibold">Analysis complete - review changes below.</p>
       </div>
     )
   }

@@ -29,10 +29,10 @@ export function ApplyButton({ changes, selectedIds, onApplied }: Props) {
         );
         onApplied();
       } else if (count === -1) {
-        setResult("Bridge not connected — refresh the page then try again.");
+        setResult("Bridge not connected - refresh the page then try again.");
       } else {
         setResult(
-          "Could not apply — original text not found. Try re-analyzing.",
+          "Could not apply - original text not found. Try re-analyzing.",
         );
       }
     } catch (err: unknown) {

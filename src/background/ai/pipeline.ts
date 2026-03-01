@@ -130,7 +130,7 @@ function parseAndValidate(
         // Full-block replacement
         current = item.modified;
       } else if (current.includes(item.original)) {
-        // Substring replacement — replace only the first occurrence
+        // Substring replacement - replace only the first occurrence
         current = current.replace(item.original, item.modified);
       } else {
         // Whitespace-normalized fallback: find the closest match
@@ -138,7 +138,7 @@ function parseAndValidate(
         const normOriginal = item.original.replace(/\s+/g, " ").trim();
         if (normCurrent.includes(normOriginal)) {
           // Rebuild: replace in the normalized version, then re-apply to original spacing
-          // (best-effort — avoids a silent skip)
+          // (best-effort - avoids a silent skip)
           current = current
             .replace(/\s+/g, " ")
             .trim()
@@ -158,7 +158,7 @@ function parseAndValidate(
 
     const change: ProposedChange = {
       blockId,
-      original: block.content, // always the full block — bridge indexOf is reliable
+      original: block.content, // always the full block - bridge indexOf is reliable
       modified: current,
       reasoning: reasonings.join(" | "),
       block,

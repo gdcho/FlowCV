@@ -84,7 +84,7 @@ export function validateAIOutput(change: ProposedChange): boolean {
     return false;
   }
 
-  // 3. Content size guard — must be at least 30% of original length
+  // 3. Content size guard - must be at least 30% of original length
   if (modified.length < original.length * 0.3) {
     console.warn(
       `[FlowCV Safety] Modified content too short for block ${blockId}: ` +

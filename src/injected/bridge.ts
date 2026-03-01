@@ -1,8 +1,8 @@
 /**
- * bridge.ts — Runs in the PAGE's MAIN world via chrome.scripting.executeScript.
+ * bridge.ts - Runs in the PAGE's MAIN world via chrome.scripting.executeScript.
  *
  * Supports both Monaco Editor (older Overleaf) and CodeMirror 6 (current Overleaf).
- * The message listener is set up immediately — no waiting for editor to load.
+ * The message listener is set up immediately - no waiting for editor to load.
  *
  * DO NOT import from other src/ modules. This file compiles as a standalone bundle.
  */
@@ -116,7 +116,7 @@ function getCMView(): CMEditorView | null {
   const named = (contentEl as any).cmView?.view;
   if (isEditorView(named)) return named;
 
-  // Scan own enumerable properties — handles minified property names
+  // Scan own enumerable properties - handles minified property names
   for (const key of Object.keys(contentEl as object)) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const prop = (contentEl as any)[key];
@@ -161,7 +161,7 @@ function applyCodeMirrorEdit(original: string, modified: string): boolean {
 // ─── Overleaf compile trigger ─────────────────────────────────────────────────
 
 function triggerCompile(): void {
-  // Try multiple selectors — Overleaf's DOM varies across versions
+  // Try multiple selectors - Overleaf's DOM varies across versions
   const selectors = [
     'button[data-ol-tooltip="Recompile"]',
     'button[aria-label="Recompile"]',
@@ -182,7 +182,7 @@ function triggerCompile(): void {
 }
 
 // ─── Message listener ─────────────────────────────────────────────────────────
-// Set up IMMEDIATELY — the Sidebar can call requestContent() at any time.
+// Set up IMMEDIATELY - the Sidebar can call requestContent() at any time.
 
 window.addEventListener("message", (event: MessageEvent) => {
   const msg = event.data as {
@@ -199,9 +199,9 @@ window.addEventListener("message", (event: MessageEvent) => {
       const content = getMonacoContent() ?? getCodeMirrorContent();
 
       if (!content) {
-        // Editor not ready yet — don't respond; requestContent() will retry.
+        // Editor not ready yet - don't respond; requestContent() will retry.
         console.warn(
-          "[FlowCV Bridge] Editor not ready — no content found (Monaco + CodeMirror tried)",
+          "[FlowCV Bridge] Editor not ready - no content found (Monaco + CodeMirror tried)",
         );
         return;
       }
@@ -254,7 +254,7 @@ window.addEventListener("message", (event: MessageEvent) => {
   }
 });
 
-// Signal ready right away — listener is already active above.
+// Signal ready right away - listener is already active above.
 window.postMessage(
   { source: BRIDGE_SOURCE, type: "LATEX_FLOW_BRIDGE_READY" },
   "*",

@@ -1,7 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { Sidebar } from "./Sidebar";
-// Vite ?inline returns the compiled CSS string — critical for Shadow DOM isolation
+// Vite ?inline returns the compiled CSS string - critical for Shadow DOM isolation
 import tailwindStyles from "./styles.css?inline";
 import { LOGO_DATA_URL } from "@/logo";
 
@@ -14,9 +14,9 @@ export const TOGGLE_EVENT = "FlowCV-toggle";
 export function mountSidebar(): void {
   if (shadowHost) return;
 
-  // ── Toggle button — lives directly on document.body (NOT in shadow DOM) ──
+  // ── Toggle button - lives directly on document.body (NOT in shadow DOM) ──
   // This avoids any shadow-DOM overflow/clipping issues with the previous
-  // translateX(-100%) approach. Inline styles only — no Tailwind dependency.
+  // translateX(-100%) approach. Inline styles only - no Tailwind dependency.
   toggleBtn = document.createElement("button");
   toggleBtn.id = "FlowCV-toggle";
   toggleBtn.title = "Toggle FlowCV";
@@ -49,7 +49,7 @@ export function mountSidebar(): void {
   });
   document.body.appendChild(toggleBtn);
 
-  // ── Shadow DOM host — sidebar panel only, no toggle button ──
+  // ── Shadow DOM host - sidebar panel only, no toggle button ──
   shadowHost = document.createElement("div");
   shadowHost.id = "FlowCV-root";
   Object.assign(shadowHost.style, {
