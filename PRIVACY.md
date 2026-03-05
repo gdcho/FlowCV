@@ -1,8 +1,8 @@
 # Privacy Policy - FlowCV Chrome Extension
 
-**Last updated: February 2026**
+Last updated: March 2026
 
-FlowCV ("the extension") is a Chrome extension that uses Claude AI to tailor your Overleaf LaTeX resume to job descriptions scraped from LinkedIn. This policy explains what data the extension accesses, how it is used, and what is never collected.
+FlowCV ("the extension") is a Chrome extension that uses Claude AI to score and tailor your Overleaf LaTeX resume to job descriptions scraped from LinkedIn. This policy explains what data the extension accesses, how it is used, and what is never collected.
 
 ---
 
@@ -30,10 +30,15 @@ FlowCV ("the extension") is a Chrome extension that uses Claude AI to tailor you
 
 ## 2. Data sent to third parties
 
-The only third party that receives any data is **Anthropic** (via `api.anthropic.com`). When you click Analyze, the extension sends:
+The only third party that receives any data is **Anthropic** (via `api.anthropic.com`). The extension makes up to two separate API calls:
 
+**ATS Score** (when you click Check ATS Score):
 - Your API key (in the Authorization header)
-- A structured prompt containing excerpts of the job description and your resume's LaTeX blocks
+- A prompt containing the job description and your resume's LaTeX source, used to produce a structured score
+
+**Analyze & Tailor** (when you click Analyze):
+- Your API key (in the Authorization header)
+- A structured prompt containing the job description, your resume's LaTeX blocks, and optionally the ATS score breakdown
 
 Anthropic's own privacy policy applies to data processed through their API: <https://www.anthropic.com/legal/privacy>
 
@@ -53,14 +58,15 @@ FlowCV does not send data to any other server, analytics service, or third party
 
 ## 4. Permissions justification
 
-| Permission                | What it accesses                          | Why it is needed                                                    |
-| ------------------------- | ----------------------------------------- | ------------------------------------------------------------------- |
-| `storage`                 | Chrome's local key-value store            | Saves your API key and captured job description between sessions    |
-| `activeTab`               | URL of the current tab                    | Detects whether you are on LinkedIn to enable scraping              |
-| `scripting`               | Ability to inject JavaScript into a page  | Injects a bridge script into Overleaf to read and write editor text |
-| Host: `overleaf.com`      | DOM of Overleaf project pages             | Displays the sidebar UI and reads/writes LaTeX via the editor API   |
-| Host: `linkedin.com`      | DOM of LinkedIn job-posting pages         | Scrapes job title, description, and requirements                    |
-| Host: `api.anthropic.com` | Outbound HTTPS requests to Anthropic's API | Streams Claude AI responses for resume tailoring                   |
+| Permission                | What it accesses                           | Why it is needed                                                                  |
+| ------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------- |
+| `storage`                 | Chrome's local key-value store             | Saves your API key and captured job description between sessions                  |
+| `activeTab`               | URL of the current tab                     | Detects whether you are on LinkedIn to enable scraping                            |
+| `scripting`               | Ability to inject JavaScript into a page   | Injects a bridge script into Overleaf to read and write editor text               |
+| `tabs`                    | Tab status and reload control              | Reloads the LinkedIn tab from the background service worker for SPA navigation    |
+| Host: `overleaf.com`      | DOM of Overleaf project pages              | Displays the sidebar UI and reads/writes LaTeX via the editor API                 |
+| Host: `linkedin.com`      | DOM of LinkedIn job-posting pages          | Scrapes job title, description, and requirements                                  |
+| Host: `api.anthropic.com` | Outbound HTTPS requests to Anthropic's API | Sends resume and JD data to Claude for ATS scoring and tailoring suggestions      |
 
 ---
 

@@ -2,17 +2,19 @@
 
 ![FlowCV logo](./flowLogo.png)
 
-**FlowCV** is a Chrome extension that tailors your Overleaf LaTeX resume to a specific job description using Claude AI. Open a job posting on LinkedIn, click Capture, and the extension proposes targeted edits directly inside your Overleaf editor - with word-level diff previews and one-click apply that auto-recompiles.
+**FlowCV** is a Chrome extension that tailors your Overleaf LaTeX resume to a specific job description using Claude AI. Open a job posting on LinkedIn, click Capture, and the extension proposes targeted edits directly inside your Overleaf editor — with ATS scoring, word-level diff previews, and one-click apply that auto-recompiles.
 
 ---
 
 ## Features
 
 - **JD scraping** - captures job title, summary, qualifications, responsibilities, keywords, and seniority level from LinkedIn
-- **AI-powered tailoring** - Claude rewrites resume bullets to mirror the JD's exact keywords and quantify every bullet with metrics
-- **Word-level diff preview** - before/after view with deleted words in red and inserted words in green
+- **ATS score checker** - grades your resume against the captured JD across 5 weighted criteria (Keywords 40%, Formatting 25%, Experience 20%, Education 10%, Location 5%) using Claude Haiku
+- **AI-powered tailoring** - Claude rewrites resume bullets and skills sections to mirror the JD's exact keywords, quantify every bullet with metrics, and address ATS gaps; automatically more aggressive when score is below 50
+- **ATS-informed tailoring** - run the ATS check first, then Analyze & Tailor passes the full score breakdown to Claude so it prioritises the highest-impact fixes
+- **Word-level diff preview** - before/after view with deleted words in red and inserted words in green, organized in collapsible sections
 - **One-click apply** - patches your Overleaf LaTeX document in place and automatically triggers recompile
-- **ATS optimization** - prompt engineered for Workday, Greenhouse, Lever, and iCIMS keyword scoring
+- **SPA-aware capture** - if navigating LinkedIn's SPA without a page reload, the extension reloads the tab from the background service worker and reopens the popup automatically
 - **Safety validation** - brace balance checks and command allowlist prevent malformed LaTeX from reaching your document
 
 ---
@@ -20,11 +22,13 @@
 ## How it works
 
 1. Open a job posting on LinkedIn (URL must contain `currentJobId`)
-2. Click the FlowCV popup icon → **Capture Job**
+2. Click the FlowCV popup icon → **Capture Job** (the extension reloads the tab if needed and reopens the popup)
 3. Open your resume on Overleaf
 4. Click the FlowCV sidebar toggle button (right edge of the editor)
-5. Review proposed changes with before/after word diffs
-6. Select the changes you want and click **Apply** - Overleaf recompiles automatically
+5. Optionally click **Check ATS Score** to grade your resume against the JD before tailoring
+6. Click **Analyze & Tailor** (or **Analyze & Tailor (with ATS)** if a score exists) to generate suggestions
+7. Review proposed changes in the collapsible **Suggested Changes** section with before/after word diffs
+8. Select the changes you want and click **Apply** - Overleaf recompiles automatically
 
 ---
 
@@ -66,7 +70,12 @@ flowchart TD
     BR -->|reads| ED
     BR -->|"CONTENT_RESPONSE"| SD
 
-    SD -->|"ANALYZE_REQUEST\n(runtime.connect port)"| RT
+    SD -->|"ATS_SCORE_REQUEST\n(runtime.connect port)"| RT
+    RT -->|"claude-haiku-4-5\nnon-streaming"| EXT
+    EXT -->|"JSON score"| RT
+    RT -->|"ATS_SCORE_COMPLETE"| SD
+
+    SD -->|"ANALYZE_REQUEST + atsResult\n(runtime.connect port)"| RT
     RT --> AI
     AI -->|stream| EXT
     EXT -->|SSE chunks| AI
@@ -155,17 +164,18 @@ After all changes are applied, the bridge locates and clicks Overleaf's Recompil
 
 ## Tech stack
 
-| Layer           | Tech                                    |
-| --------------- | --------------------------------------- |
-| Framework       | React 18 + TypeScript (strict)          |
-| Build           | Vite 5 + CRXJS 2.0 beta                 |
-| Styling         | Tailwind CSS v3 (Shadow DOM compatible) |
-| Fonts           | Inter (Google Fonts)                    |
-| State           | Zustand v5                              |
-| AI              | Anthropic Claude (claude-sonnet-4-6)    |
-| Package manager | pnpm                                    |
-| Manifest        | MV3                                     |
-| Tests           | Vitest + jsdom                          |
+| Layer            | Tech                                        |
+| ---------------- | ------------------------------------------- |
+| Framework        | React 18 + TypeScript (strict)              |
+| Build            | Vite 5 + CRXJS 2.0 beta                     |
+| Styling          | Tailwind CSS v3 (Shadow DOM compatible)     |
+| Fonts            | Inter (Google Fonts)                        |
+| State            | Zustand v5                                  |
+| AI (tailoring)   | Anthropic Claude Sonnet (claude-sonnet-4-6) |
+| AI (ATS scoring) | Anthropic Claude Haiku (claude-haiku-4-5)   |
+| Package manager  | pnpm                                        |
+| Manifest         | MV3                                         |
+| Tests            | Vitest + jsdom                              |
 
 ---
 
@@ -216,14 +226,15 @@ src/
 
 ## Permissions
 
-| Permission                | Reason                                                          |
-| ------------------------- | --------------------------------------------------------------- |
-| `storage`                 | Persists the captured job description across sessions           |
-| `activeTab`               | Reads the current tab URL to detect LinkedIn                    |
-| `scripting`               | Injects the Monaco/CodeMirror bridge into Overleaf's MAIN world |
-| Host: `overleaf.com`      | Runs the sidebar content script and bridge injection            |
-| Host: `linkedin.com`      | Runs the JD scraper content script                              |
-| Host: `api.anthropic.com` | Streams Claude API responses from the service worker            |
+| Permission                | Reason                                                                              |
+| ------------------------- | ----------------------------------------------------------------------------------- |
+| `storage`                 | Persists the captured job description across sessions                               |
+| `activeTab`               | Reads the current tab URL to detect LinkedIn                                        |
+| `scripting`               | Injects the Monaco/CodeMirror bridge into Overleaf's MAIN world                     |
+| `tabs`                    | Reloads the LinkedIn tab from the background SW when navigating via the SPA         |
+| Host: `overleaf.com`      | Runs the sidebar content script and bridge injection                                |
+| Host: `linkedin.com`      | Runs the JD scraper content script                                                  |
+| Host: `api.anthropic.com` | Streams Claude API responses from the service worker                                |
 
 ---
 
