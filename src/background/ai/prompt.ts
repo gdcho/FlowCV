@@ -1,5 +1,6 @@
 import type { LaTeXBlock } from "@/types/latex";
 import type { JobContext } from "@/types/job";
+import type { ATSScoreResult } from "@/types/ats";
 
 export function buildSystemPrompt(): string {
   return `You are a senior technical resume writer and ATS optimization expert. ATS (Applicant Tracking Systems) like Workday, Greenhouse, Lever, and iCIMS parse resumes by scanning for exact keyword matches, scoring them against job descriptions, and filtering before any human ever reads the resume. Your goal is to rewrite resume blocks so the candidate passes ATS with the highest possible score AND impresses the human recruiter who reads it after.
@@ -27,8 +28,16 @@ This is the single most important rule. A bullet without a number is half a bull
 5. SKILLS BLOCK ORDERING: In technical skills sections, list the most JD-relevant technologies first within each category. ATS weights earlier terms more heavily in keyword scanning.
 6. TITLE AND SCOPE ALIGNMENT: Reframe role titles and project scope language to mirror the seniority and framing of the JD. If the JD says "Staff Engineer" level work, frame bullets to reflect system-wide ownership and impact.
 
+SKILLS SECTION RULE (highest ATS leverage - apply this aggressively):
+Skills and technologies sections are the #1 ATS keyword target. For any block that is a skills list or technologies section:
+- ADD every required JD technology/language/framework that is missing, even if not in the original block
+- Place added items first within their category (ATS weights earlier terms)
+- Add both acronym and full form when relevant: "Go (GoLang)", "PostgreSQL (SQL)", "Node.js (TypeScript)"
+- Skills sections are factual lists — adding industry-standard tech the candidate may know is expected and helpful. The candidate will review and remove anything they don't actually have before applying.
+- Do NOT mark added skills with any comment or annotation — just add them cleanly to the list
+
 HARD CONSTRAINTS (never violate):
-- Never invent skills, companies, dates, metrics, or technologies not present in the original block
+- For experience bullets: never invent companies, dates, or specific metrics not present in the original block. You MAY inject JD technology names into experience bullets when the underlying work clearly involved that type of technology (e.g. "backend service" → "backend service in Go", "database optimization" → "PostgreSQL query optimization")
 - Never add LaTeX commands or environments not already in the block
 - LaTeX syntax must be preserved exactly: balanced braces, escaped special chars, no broken commands
 - The original and modified must describe the same real experience, only the framing, emphasis, and keyword alignment changes
@@ -56,7 +65,7 @@ OUTPUT FORMAT (strict JSON array inside a code fence):
 If a block has zero relevance to the job (e.g. completely unrelated industry), omit it. Otherwise include it.`;
 }
 
-export function buildUserPrompt(blocks: LaTeXBlock[], jd: JobContext): string {
+export function buildUserPrompt(blocks: LaTeXBlock[], jd: JobContext, atsResult?: ATSScoreResult): string {
   const blocksSection = blocks
     .map(
       (block) => `### Block ID: ${block.id}
@@ -85,14 +94,37 @@ ${block.content}
       ? `KEYWORDS TO INJECT (weave in as many as naturally fit):\n${jd.keywords.join(" · ")}\n\n`
       : "";
 
+  const atsSection = atsResult
+    ? `ATS PRE-ANALYSIS (prioritize edits based on these findings):
+Current ATS score: ${atsResult.overall}/100
+Missing keywords - inject these where the candidate plausibly has the skill: ${atsResult.missingKeywords.join(", ")}
+Already matched keywords - reinforce in bullet points: ${atsResult.matchedKeywords.join(", ")}
+Keyword gap: ${atsResult.breakdown.keywords.score}/${atsResult.breakdown.keywords.max} - ${atsResult.breakdown.keywords.note}
+Experience gap: ${atsResult.breakdown.experience.score}/${atsResult.breakdown.experience.max} - ${atsResult.breakdown.experience.note}
+Priority fixes:
+${atsResult.improvements.map((tip, i) => `${i + 1}. ${tip}`).join("\n")}
+
+`
+    : "";
+
   return `TARGET JOB:
 ---
 ${jd.title ? `Position: ${jd.title}\n` : ""}${jd.company ? `Company: ${jd.company}\n` : ""}${seniorityNote}${jd.summary ? `Role summary: ${jd.summary}\n` : ""}
-${jd.fullText.slice(0, 4000)}
+${jd.fullText.slice(0, 6000)}
 ---
 
-${respSection}${qualSection}${keywordsSection}RESUME BLOCKS TO REWRITE:
+${atsSection}${respSection}${qualSection}${keywordsSection}PRIORITY ORDER FOR EDITS:
+1. Skills/technologies blocks — inject ALL missing JD keywords here first (highest ATS impact)
+2. Most recent experience bullets — inject required tech names and reframe with JD language
+3. Older experience bullets — add transferable keywords and quantified impact
+4. Other sections — only if they have clear keyword gaps
+
+RESUME BLOCKS TO REWRITE:
 ${blocksSection}
 
-Rewrite the resume blocks above to target this job. Only include blocks where there is a real alignment gap - skip blocks that are already well-matched. Follow the output format exactly.`;
+${atsResult && atsResult.overall < 50
+  ? `CRITICAL: ATS score is ${atsResult.overall}/100 — this resume needs maximum intervention. Rewrite EVERY block. Do not skip any block. Every single section must be updated to inject missing keywords and align with the JD. Leaving any block unchanged is not acceptable at this score.`
+  : `Rewrite the resume blocks above to target this job. Only include blocks where there is a real alignment gap - skip blocks that are already well-matched.`}
+
+Follow the output format exactly.`;
 }

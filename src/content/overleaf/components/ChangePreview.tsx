@@ -75,7 +75,7 @@ export function ChangePreview({ changes, selectedIds, onToggle, onSelectAll, onD
   const allSelected = changes.every((c) => selectedIds.has(c.blockId))
 
   return (
-    <div className="mx-3 mb-3">
+    <div className="px-3 py-2">
       <div className="flex items-center justify-between mb-2">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
           Proposed Changes ({changes.length})

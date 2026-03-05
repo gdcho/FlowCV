@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { LaTeXBlock } from "@/types/latex";
 import type { JobContext } from "@/types/job";
 import type { ProposedChange } from "@/types/ai";
+import type { ATSScoreResult } from "@/types/ats";
 import { buildSystemPrompt, buildUserPrompt } from "./prompt";
 import { matchBlocksToKeywords } from "./matcher";
 import { validateAIOutput } from "./safety";
@@ -15,6 +16,7 @@ interface PipelineInput {
   apiKey: string;
   model?: string;
   maxTokens?: number;
+  atsResult?: ATSScoreResult;
 }
 
 /**
@@ -30,6 +32,7 @@ export async function* runAIPipeline(
     apiKey,
     model = "claude-sonnet-4-6",
     maxTokens = 4096,
+    atsResult,
   } = input;
 
   const client = new Anthropic({
@@ -48,7 +51,7 @@ export async function* runAIPipeline(
   }
 
   const systemPrompt = buildSystemPrompt();
-  const userPrompt = buildUserPrompt(relevantBlocks, jd);
+  const userPrompt = buildUserPrompt(relevantBlocks, jd, atsResult);
 
   const stream = client.messages.stream({
     model,

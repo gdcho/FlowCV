@@ -7,6 +7,7 @@ interface Settings {
 }
 type CaptureStatus =
   | "idle"
+  | "refreshing"
   | "capturing"
   | "success"
   | "error"
@@ -19,12 +20,6 @@ function getPageContext(url: string): PageContext {
   // LinkedIn: actual job posting has currentJobId in query OR /jobs/view/ in path
   if (url.includes("linkedin.com")) {
     return url.includes("currentJobId=") || url.includes("/jobs/view/")
-      ? "posting"
-      : "feed";
-  }
-  // Indeed: actual job posting has viewjob in path or jk= param
-  if (url.includes("indeed.com")) {
-    return url.includes("viewjob") || url.includes("jk=")
       ? "posting"
       : "feed";
   }
@@ -60,7 +55,7 @@ export default function Popup() {
   }, []);
 
   async function handleCapture() {
-    setCaptureStatus("capturing");
+    setCaptureStatus("refreshing");
     setCaptureError(null);
 
     try {
@@ -70,34 +65,17 @@ export default function Popup() {
       });
       if (!tab?.id) throw new Error("No active tab");
 
+      // Delegate to the background SW: it reloads the tab, waits for load,
+      // then sends CAPTURE_JD_REQUEST. The popup would close on tab reload
+      // if we did this here, but the SW survives page navigation.
       type CaptureResp =
         | { success: true; title: string | null; company: string | null }
         | { success: false; error?: string };
 
-      async function sendCapture(tabId: number): Promise<CaptureResp> {
-        return chrome.tabs.sendMessage(tabId, {
-          type: "CAPTURE_JD_REQUEST",
-        }) as Promise<CaptureResp>;
-      }
-
-      let resp: CaptureResp;
-      try {
-        resp = await sendCapture(tab.id);
-      } catch (connErr) {
-        const msg =
-          connErr instanceof Error ? connErr.message : String(connErr);
-        if (
-          msg.includes("Receiving end does not exist") ||
-          msg.includes("Could not establish connection")
-        ) {
-          // Content script not yet active on this tab - happens when the
-          // extension was just installed/updated and the tab predates it.
-          setCaptureStatus("error");
-          setCaptureError("Refresh the page and try again");
-          return;
-        }
-        throw connErr;
-      }
+      const resp = await chrome.runtime.sendMessage({
+        type: "RELOAD_AND_CAPTURE",
+        payload: { tabId: tab.id },
+      }) as CaptureResp;
 
       if (resp.success) {
         setCaptureStatus("success");
@@ -388,7 +366,7 @@ export default function Popup() {
               {pageContext === "posting" ? (
                 <button
                   onClick={() => void handleCapture()}
-                  disabled={captureStatus === "capturing"}
+                  disabled={captureStatus === "capturing" || captureStatus === "refreshing"}
                   style={{
                     width: "100%",
                     padding: "0.5rem",
@@ -404,20 +382,22 @@ export default function Popup() {
                     fontSize: "0.75rem",
                     fontWeight: 600,
                     cursor:
-                      captureStatus === "capturing" ? "default" : "pointer",
-                    opacity: captureStatus === "capturing" ? 0.7 : 1,
+                      captureStatus === "capturing" || captureStatus === "refreshing" ? "default" : "pointer",
+                    opacity: captureStatus === "capturing" || captureStatus === "refreshing" ? 0.7 : 1,
                     transition: "background 0.15s",
                   }}
                 >
-                  {captureStatus === "capturing"
-                    ? "⏳ Capturing…"
-                    : captureStatus === "success"
-                      ? "✓ Captured! Capture another?"
-                      : captureStatus === "error"
-                        ? "✗ Failed - Try again"
-                        : jd
-                          ? "⚡ Capture new JD from this tab"
-                          : "⚡ Capture JD from this tab"}
+                  {captureStatus === "refreshing"
+                    ? "↻ Refreshing page…"
+                    : captureStatus === "capturing"
+                      ? "⏳ Capturing…"
+                      : captureStatus === "success"
+                        ? "✓ Captured! Capture another?"
+                        : captureStatus === "error"
+                          ? "✗ Failed - Try again"
+                          : jd
+                            ? "⚡ Capture new JD from this tab"
+                            : "⚡ Capture JD from this tab"}
                 </button>
               ) : pageContext === "feed" ? (
                 <p
@@ -445,16 +425,29 @@ export default function Popup() {
                   </code>
                 </p>
               ) : (
-                <p
-                  style={{
-                    fontSize: "0.6875rem",
-                    color: "#9ca3af",
-                    textAlign: "center",
-                    padding: "0.125rem 0",
-                  }}
-                >
-                  Navigate to a LinkedIn or Indeed job posting to capture
-                </p>
+                <div style={{ textAlign: "center", padding: "0.25rem 0" }}>
+                  <button
+                    onClick={() => void chrome.tabs.create({ url: "https://www.linkedin.com/jobs/" })}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.375rem",
+                      padding: "0.4rem 0.75rem",
+                      background: "#f3f4f6",
+                      color: "#374151",
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "0.5rem",
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#0a66c2">
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                    Find Jobs on LinkedIn
+                  </button>
+                </div>
               )}
               {captureStatus === "error" && captureError && (
                 <p

@@ -2,7 +2,7 @@
 
 **Last updated: February 2026**
 
-FlowCV ("the extension") is a Chrome extension that uses Claude AI to tailor your Overleaf LaTeX resume to job descriptions scraped from LinkedIn and Indeed. This policy explains what data the extension accesses, how it is used, and what is never collected.
+FlowCV ("the extension") is a Chrome extension that uses Claude AI to tailor your Overleaf LaTeX resume to job descriptions scraped from LinkedIn. This policy explains what data the extension accesses, how it is used, and what is never collected.
 
 ---
 
@@ -16,7 +16,7 @@ FlowCV ("the extension") is a Chrome extension that uses Claude AI to tailor you
 
 ### 1.2 Job description text
 
-- **What:** The job title, company, summary, qualifications, responsibilities, and keywords scraped from the active LinkedIn or Indeed tab when you click Capture Job.
+- **What:** The job title, company, summary, qualifications, responsibilities, and keywords scraped from the active LinkedIn tab when you click Capture Job.
 - **How stored:** Held in memory in the extension's MV3 service worker for the duration of your session. Optionally persisted to `chrome.storage.local` so it survives a browser restart.
 - **How used:** Included in the prompt sent to the Anthropic API to generate resume suggestions. Never transmitted to any server other than `api.anthropic.com`.
 
@@ -56,11 +56,10 @@ FlowCV does not send data to any other server, analytics service, or third party
 | Permission                | What it accesses                          | Why it is needed                                                    |
 | ------------------------- | ----------------------------------------- | ------------------------------------------------------------------- |
 | `storage`                 | Chrome's local key-value store            | Saves your API key and captured job description between sessions    |
-| `activeTab`               | URL of the current tab                    | Detects whether you are on LinkedIn or Indeed to enable scraping    |
+| `activeTab`               | URL of the current tab                    | Detects whether you are on LinkedIn to enable scraping              |
 | `scripting`               | Ability to inject JavaScript into a page  | Injects a bridge script into Overleaf to read and write editor text |
 | Host: `overleaf.com`      | DOM of Overleaf project pages             | Displays the sidebar UI and reads/writes LaTeX via the editor API   |
 | Host: `linkedin.com`      | DOM of LinkedIn job-posting pages         | Scrapes job title, description, and requirements                    |
-| Host: `indeed.com`        | DOM of Indeed job-posting pages           | Scrapes job title, description, and requirements                    |
 | Host: `api.anthropic.com` | Outbound HTTPS requests to Anthropic's API | Streams Claude AI responses for resume tailoring                   |
 
 ---

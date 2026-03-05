@@ -70,7 +70,7 @@ export type BridgeMessage =
 
 export type RuntimeMessage =
   | { type: 'BRIDGE_INJECT_REQUEST' }
-  | { type: 'ANALYZE_REQUEST'; payload: { blocks: LaTeXBlock[]; jd: JobContext } }
+  | { type: 'ANALYZE_REQUEST'; payload: { blocks: LaTeXBlock[]; jd: JobContext; atsResult?: import('./ats').ATSScoreResult } }
   | { type: 'ANALYZE_STREAM_CHUNK'; payload: { chunk: string } }
   | { type: 'ANALYZE_COMPLETE'; payload: { changes: ProposedChange[] } }
   | { type: 'ANALYZE_ERROR'; payload: { error: string } }
@@ -80,3 +80,7 @@ export type RuntimeMessage =
   | { type: 'GET_SETTINGS' }
   | { type: 'GET_SETTINGS_RESPONSE'; payload: AppSettings }
   | { type: 'SAVE_SETTINGS'; payload: Partial<AppSettings> }
+  | { type: 'RELOAD_AND_CAPTURE'; payload: { tabId: number } }
+  | { type: 'ATS_SCORE_REQUEST'; payload: { resumeText: string; jd: JobContext } }
+  | { type: 'ATS_SCORE_COMPLETE'; payload: { result: import('./ats').ATSScoreResult } }
+  | { type: 'ATS_SCORE_ERROR'; payload: { error: string } }

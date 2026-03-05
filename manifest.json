@@ -3,11 +3,10 @@
   "name": "FlowCV",
   "version": "1.0.0",
   "description": "Tailor your Overleaf LaTeX resume to job descriptions using Claude AI",
-  "permissions": ["storage", "activeTab", "scripting"],
+  "permissions": ["storage", "activeTab", "scripting", "tabs"],
   "host_permissions": [
     "https://www.overleaf.com/*",
     "https://www.linkedin.com/*",
-    "https://www.indeed.com/*",
     "https://api.anthropic.com/*"
   ],
   "background": {
@@ -22,7 +21,7 @@
       "world": "ISOLATED"
     },
     {
-      "matches": ["https://www.linkedin.com/*", "https://www.indeed.com/*"],
+      "matches": ["https://www.linkedin.com/*"],
       "js": ["src/content/scraper/index.ts"],
       "run_at": "document_idle",
       "world": "ISOLATED"

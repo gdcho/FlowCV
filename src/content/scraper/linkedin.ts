@@ -26,11 +26,14 @@ function findByExactTextIn(
   return null;
 }
 
-/** Find the element matching any CSS selector with non-trivial text. */
-function queryNonEmpty(selectors: string[]): HTMLElement | null {
+/** Find the element matching any CSS selector with non-trivial text, scoped to root. */
+function queryNonEmptyIn(
+  root: Document | HTMLElement,
+  selectors: string[],
+): HTMLElement | null {
   for (const sel of selectors) {
     try {
-      const el = document.querySelector<HTMLElement>(sel);
+      const el = root.querySelector<HTMLElement>(sel);
       if (el && (el.innerText?.trim().length ?? 0) > 80) return el;
     } catch {
       // ignore invalid selectors
@@ -39,7 +42,7 @@ function queryNonEmpty(selectors: string[]): HTMLElement | null {
   return null;
 }
 
-/** Like queryNonEmpty but for short labels (title, company - typically < 80 chars). */
+/** Like queryNonEmptyIn but for short labels (title, company - typically < 80 chars). */
 function queryShort(selectors: string[]): HTMLElement | null {
   for (const sel of selectors) {
     try {
@@ -66,7 +69,6 @@ function findLargestTextBlockIn(
     if (el === document.body) continue;
     const len = el.innerText?.trim().length ?? 0;
     if (len > bestLen && len < 30000) {
-      // Must contain newlines (real content, not a nav bar full of links)
       const lines = (el.innerText ?? "")
         .split("\n")
         .filter((l) => l.trim().length > 20);
@@ -79,29 +81,55 @@ function findLargestTextBlockIn(
   return best;
 }
 
+/** Returns true if the text looks like a LinkedIn job-feed page rather than a job description. */
+export function looksLikeFeed(text: string): boolean {
+  const sample = text.toLowerCase().slice(0, 800);
+  return (
+    sample.includes("top job picks for you") ||
+    sample.includes("based on your profile") ||
+    sample.includes("based on your activity") ||
+    sample.includes("people also viewed") ||
+    sample.includes("jobs you may be interested in") ||
+    sample.includes("show all results") ||
+    // feed items typically have many "Promoted" or "Viewed" labels up top
+    (sample.match(/\bpromoted\b/g)?.length ?? 0) >= 2 ||
+    (sample.match(/\bviewed\b/g)?.length ?? 0) >= 3
+  );
+}
+
 // ─── Main extractor ───────────────────────────────────────────────────────────
 
 export function extractLinkedInJD(): JobContext | null {
-  // ── 1. Find the job description container ────────────────────────────────
+  // ── 1. Find the RIGHT detail panel ───────────────────────────────────────
+  // On two-panel views (search, collections, home) the left side is the feed
+  // list and the right side is the job detail. We MUST scope to the right side
+  // or Strategy C will pick up the feed as the "largest text block".
+  //
+  // NOTE: Do NOT use data-job-id here — LinkedIn puts that attribute on the
+  // feed card (left panel). Walking up from it overshoots into the whole page.
 
-  let descriptionEl: HTMLElement | null = null;
-
-  // Strategy 0: On two-panel views (search/collections/recommended), scope to the
-  // RIGHT detail panel only. This prevents the left-side job-feed list from being
-  // mistaken for the job description when falling back to findLargestTextBlock.
   const detailPanel = document.querySelector<HTMLElement>(
     [
+      // Most common: scaffold detail pane (search, collections, recommended)
       ".scaffold-layout__detail",
+      // Jobs home page variants
+      ".jobs-search__job-details--wrapper",
+      ".jobs-home-root .job-view-layout",
+      ".jobs-home-root [class*='detail']",
+      // Two-pane detail view
       ".jobs-search-two-pane__detail-view",
       ".jobs-details",
-      ".jobs-search-results-list ~ div", // sibling of results list
+      // Generic fallback
+      ".jobs-search-results-list ~ div",
       '[class*="job-details"][class*="container"]',
     ].join(", "),
   );
 
-  // Strategy A: Find "About the job" / "Job description" heading and walk up.
-  // Scope to detail panel if available to avoid false matches in the feed.
+  let descriptionEl: HTMLElement | null = null;
   const searchRoot: Document | HTMLElement = detailPanel ?? document;
+
+  // Strategy A: Find a "About the job" / "Job description" heading and walk up.
+  // Scoped to the detail panel to avoid false matches in the feed.
   const aboutHeading = findByExactTextIn(searchRoot, [
     "about the job",
     "job description",
@@ -112,7 +140,6 @@ export function extractLinkedInJD(): JobContext | null {
     "responsibilities",
   ]);
   if (aboutHeading) {
-    // The sibling/next element usually holds the content; otherwise expand the parent
     const next = aboutHeading.nextElementSibling as HTMLElement | null;
     if (next && (next.innerText?.trim().length ?? 0) > 200) {
       descriptionEl = next;
@@ -121,9 +148,9 @@ export function extractLinkedInJD(): JobContext | null {
     }
   }
 
-  // Strategy B: Known class-name selectors (LinkedIn changes these often but worth trying)
+  // Strategy B: Known class-name selectors — scoped to detail panel.
   if (!descriptionEl) {
-    descriptionEl = queryNonEmpty([
+    descriptionEl = queryNonEmptyIn(searchRoot, [
       // 2024-2025 class names
       ".jobs-description-content__text",
       ".jobs-description__content",
@@ -142,9 +169,10 @@ export function extractLinkedInJD(): JobContext | null {
     ]);
   }
 
-  // Strategy C: Find the largest text block - scoped to detail panel when available
-  if (!descriptionEl) {
-    descriptionEl = findLargestTextBlockIn(detailPanel ?? document.body);
+  // Strategy C: Largest text block — only within the detail panel.
+  // Never fall back to document.body: that includes the feed list.
+  if (!descriptionEl && detailPanel) {
+    descriptionEl = findLargestTextBlockIn(detailPanel);
   }
 
   if (!descriptionEl) {
@@ -155,51 +183,46 @@ export function extractLinkedInJD(): JobContext | null {
   const fullText = descriptionEl.innerText?.trim() ?? "";
   if (fullText.length < 100) return null;
 
+  // Guard: reject if the extracted text looks like a job feed.
+  if (looksLikeFeed(fullText)) {
+    console.warn("[FlowCV] Extracted text looks like a job feed, not a job description.");
+    return null;
+  }
+
   // ── 2. Extract title and company ─────────────────────────────────────────
-  // NOTE: queryShort is used here because job titles/company names are short
-  // strings that won't pass the 80-char threshold of queryNonEmpty.
 
   const titleEl = queryShort([
-    // 2024-2025 unified top-card (split-view and full-view)
     "h2.job-details-jobs-unified-top-card__job-title",
     "h1.job-details-jobs-unified-top-card__job-title",
     ".job-details-jobs-unified-top-card__job-title",
-    // Older layouts
     "h1.topcard__title",
     "h1.t-24",
     ".jobs-details__main-content h1",
-    // Attribute-based wildcards
     '[class*="job-title"] h1',
     '[class*="job-title"] h2',
     '[class*="job-title"] a',
     '[class*="jobs-unified-top-card__job-title"]',
-    // Last resort: first h1/h2 inside the main content panel
     "main h1",
     "main h2",
   ]);
 
   const companyEl = queryShort([
-    // 2024-2025 unified top-card
     ".job-details-jobs-unified-top-card__company-name a",
     ".job-details-jobs-unified-top-card__company-name",
-    // Older
     ".jobs-unified-top-card__company-name a",
     ".jobs-unified-top-card__company-name",
     ".topcard__org-name-link",
-    // Attribute wildcards
     '[class*="company-name"] a',
     '[class*="company-name"]',
     '[class*="employer-name"]',
   ]);
 
-  // ── 3. Fallback: parse window.title "Job Title at Company | LinkedIn" ────
+  // ── 3. Fallback: parse "Job Title at Company | LinkedIn" from page title ──
   let titleText = titleEl?.innerText?.trim() ?? null;
   let companyText = companyEl?.innerText?.trim() ?? null;
 
   if (!titleText || !companyText) {
-    // LinkedIn page title format: "Job Title at Company | LinkedIn"
-    const pageTitle = document.title ?? "";
-    const pageTitleMatch = pageTitle.match(/^(.+?)\s+at\s+(.+?)\s*\|/);
+    const pageTitleMatch = document.title.match(/^(.+?)\s+at\s+(.+?)\s*\|/);
     if (pageTitleMatch) {
       titleText = titleText ?? pageTitleMatch[1].trim();
       companyText = companyText ?? pageTitleMatch[2].trim();
