@@ -47,7 +47,7 @@ export function ApplyButton({ changes, selectedIds, onApplied }: Props) {
   if (changes.length === 0) return null;
 
   return (
-    <div className="mx-3 mb-3">
+    <div className="px-3 pb-2">
       <button
         onClick={() => void handleApply()}
         disabled={applying || selected.length === 0}

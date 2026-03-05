@@ -149,7 +149,7 @@ chrome.runtime.onConnect.addListener((port) => {
         let friendly = raw;
         if (raw.includes("overloaded")) {
           friendly = "Anthropic API is overloaded. Wait a moment and try again.";
-        } else if (raw.includes("529") || raw.includes("rate_limit") || raw.includes("529")) {
+        } else if (raw.includes("529") || raw.includes("rate_limit")) {
           friendly = "API rate limit reached. Wait a moment and try again.";
         } else if (raw.includes("401") || raw.includes("authentication")) {
           friendly = "Invalid API key. Check your key in Options.";

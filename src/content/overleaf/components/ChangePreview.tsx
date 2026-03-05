@@ -76,10 +76,7 @@ export function ChangePreview({ changes, selectedIds, onToggle, onSelectAll, onD
 
   return (
     <div className="px-3 py-2">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-          Proposed Changes ({changes.length})
-        </p>
+      <div className="flex justify-end mb-1.5">
         <button
           onClick={allSelected ? onDeselectAll : onSelectAll}
           className="text-xs text-ov hover:text-ov-dark"
