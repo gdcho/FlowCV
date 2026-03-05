@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "FlowCV",
+  "name": "FlowCV: AI Resume Tailoring & ATS Scorer",
   "version": "1.0.0",
-  "description": "Tailor your Overleaf LaTeX resume to job descriptions using Claude AI",
+  "description": "AI-powered ATS scoring and resume tailoring for Overleaf, powered by Claude.",
   "permissions": ["storage", "activeTab", "scripting", "tabs"],
   "host_permissions": [
     "https://www.overleaf.com/*",
